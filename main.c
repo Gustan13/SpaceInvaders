@@ -2,6 +2,21 @@
 #include <termios.h>
 #include <unistd.h>
 
+int initizalize_terminal(struct termios *original_terminal, struct termios *new_terminal)
+{
+    if (tcgetattr(STDIN_FILENO, original_terminal) != 0)
+        return 1;
+
+    if (tcgetattr(STDIN_FILENO, new_terminal) == 0)
+    {
+        new_terminal->c_lflag &= ~(ICANON);
+        new_terminal->c_lflag &= ~(ECHO);
+        tcsetattr(STDIN_FILENO, TCSAFLUSH, new_terminal);
+    }
+
+    return 0;
+}
+
 int main(void)
 {
     struct termios original_terminal;
@@ -9,13 +24,8 @@ int main(void)
 
     char input_character = 'a';
 
-    if (tcgetattr(STDIN_FILENO, &original_terminal) == 0)
-    {
-        new_terminal = original_terminal;
-        new_terminal.c_lflag &= ~(ICANON);
-        new_terminal.c_lflag &= ~(ECHO);
-        tcsetattr(STDIN_FILENO, TCSAFLUSH, &new_terminal);
-    }
+    if (initizalize_terminal(&original_terminal, &new_terminal))
+        return 1;
 
     while (input_character != 'x')
     {
